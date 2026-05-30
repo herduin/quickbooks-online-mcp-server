@@ -1,5 +1,7 @@
 # QuickBooks Online MCP Server
 
+> **🐳 This fork is focused on dockerizing the MCP server as an HTTP service** — deployable anywhere with built-in OAuth authentication flow. See the [Docker HTTP Server documentation](docker/README.md) for setup, deployment, and usage instructions.
+
 <div align="center">
 
 **A comprehensive Model Context Protocol (MCP) server for QuickBooks Online**
