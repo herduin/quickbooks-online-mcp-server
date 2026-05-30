@@ -55,7 +55,7 @@ docker run -d \
   -e QUICKBOOKS_REALM_ID=your_realm_id \
   -e QUICKBOOKS_ENVIRONMENT=sandbox \
   -e MCP_AUTH_TOKEN=your_token \
-  ghcr.io/herduin/quickbooks-online-mcp-server/mcp-http-server:latest
+  ghcr.io/herduin/quickbooks-online-mcp-server-http:latest
 ```
 
 ### Using Pre-built Image from GitHub
@@ -63,7 +63,7 @@ docker run -d \
 Images are automatically built and published to GitHub Container Registry on every push to `main`:
 
 ```bash
-docker pull ghcr.io/herduin/quickbooks-online-mcp-server/mcp-http-server:latest
+docker pull ghcr.io/herduin/quickbooks-online-mcp-server-http:latest
 ```
 
 ## Configuration
