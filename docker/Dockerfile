@@ -52,7 +52,7 @@ WORKDIR /app
 COPY --from=parent-builder --chown=mcpuser:mcpuser /build/dist ./src
 COPY --from=parent-builder --chown=mcpuser:mcpuser /build/node_modules ./node_modules
 
-# Copy docker built files
+# Copy docker built files (only docker/src compiled output - parent compiled files come from parent-builder)
 COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/dist/docker/src ./docker/dist
 COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/node_modules ./docker/node_modules
 COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/package.json ./docker/
