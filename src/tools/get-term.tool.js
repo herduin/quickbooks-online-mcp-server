@@ -1,0 +1,14 @@
+import { getQuickbooksTerm } from "../handlers/get-quickbooks-term.handler.js";
+import { z } from "zod";
+const toolName = "get_term";
+const toolDescription = "Retrieve a specific payment term from QuickBooks Online by ID.";
+const toolSchema = z.object({
+    id: z.string().min(1).describe("Term ID"),
+});
+const toolHandler = async ({ params }) => {
+    const response = await getQuickbooksTerm(params.id);
+    if (response.isError)
+        return { content: [{ type: "text", text: `Error: ${response.error}` }] };
+    return { content: [{ type: "text", text: JSON.stringify(response.result, null, 2) }] };
+};
+export const GetTermTool = { name: toolName, description: toolDescription, schema: toolSchema, handler: toolHandler };
