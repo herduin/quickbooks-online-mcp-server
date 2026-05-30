@@ -225,21 +225,10 @@ export class QuickBooksToolRegistry {
       annotations.destructiveHint = true;
     }
 
-    // Create output schema for consistent response structure
-    const outputSchema = {
-      type: "object" as const,
-      properties: {
-        success: { type: "boolean" as const },
-        data: { type: "object" as const },
-        error: { type: "string" as const },
-      },
-    };
-
     return {
       name: tool.name,
       description: tool.description,
       inputSchema,
-      outputSchema,
       annotations: Object.keys(annotations).length > 0 ? annotations : undefined,
       handler: async (args: any) => {
         try {

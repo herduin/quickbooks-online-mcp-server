@@ -53,7 +53,6 @@ Reports use the pattern: get_<report_name>
         name: tool.name,
         description: tool.description,
         inputSchema: tool.inputSchema,
-        ...(tool.outputSchema ? { outputSchema: tool.outputSchema } : {}),
         ...(tool.annotations ? { annotations: tool.annotations } : {}),
       })),
     };
@@ -75,8 +74,6 @@ Reports use the pattern: get_<report_name>
 
       return {
         content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        // CRITICAL: Always return structuredContent when outputSchema is defined
-        ...(tool.outputSchema ? { structuredContent: result } : {}),
       };
     } catch (error: any) {
       const errorMessage = error?.message || String(error);
