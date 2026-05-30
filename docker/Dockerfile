@@ -30,6 +30,9 @@ RUN cd docker && npm ci && npm cache clean --force
 COPY docker/src ./docker/src
 COPY docker/tsconfig.json ./docker/
 
+# Copy parent source (needed for TypeScript to resolve cross-directory imports)
+COPY src ./src
+
 # Build docker TypeScript
 RUN cd docker && npm run build
 
@@ -50,7 +53,7 @@ COPY --from=parent-builder --chown=mcpuser:mcpuser /build/dist ./src
 COPY --from=parent-builder --chown=mcpuser:mcpuser /build/node_modules ./node_modules
 
 # Copy docker built files
-COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/dist ./docker/dist
+COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/dist/docker/src ./docker/dist
 COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/node_modules ./docker/node_modules
 COPY --from=docker-builder --chown=mcpuser:mcpuser /build/docker/package.json ./docker/
 
