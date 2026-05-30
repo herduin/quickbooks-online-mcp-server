@@ -8,7 +8,7 @@ WORKDIR /build
 
 # Copy parent package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Copy parent source
 COPY src ./src
@@ -24,7 +24,7 @@ WORKDIR /build
 
 # Copy docker package files
 COPY docker/package*.json ./docker/
-RUN cd docker && npm ci --only=production && npm cache clean --force
+RUN cd docker && npm ci && npm cache clean --force
 
 # Copy docker source
 COPY docker/src ./docker/src
