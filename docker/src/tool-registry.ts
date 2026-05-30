@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 // Import tools from parent src directory
 import { CreateInvoiceTool } from "../../src/tools/create-invoice.tool.js";
@@ -186,6 +187,50 @@ interface MCPTool {
   handler: (args: any) => Promise<any>;
 }
 
+/** Check if a Zod type is optional/nullable */
+function isZodOptional(schema: any): boolean {
+  const typeName = schema?._def?.typeName;
+  return typeName === "ZodOptional" || typeName === "ZodNullable" || typeName === "ZodDefault";
+}
+
+/** Fallback: convert a single Zod field to a basic JSON Schema type */
+function zodFieldToJsonSchema(schema: any): any {
+  const typeName = schema?._def?.typeName;
+  if (!typeName) return {};
+
+  switch (typeName) {
+    case "ZodString": return { type: "string" };
+    case "ZodNumber": return { type: "number" };
+    case "ZodBoolean": return { type: "boolean" };
+    case "ZodEnum": return { type: "string", enum: schema._def.values };
+    case "ZodArray": return { type: "array", items: zodFieldToJsonSchema(schema._def.type) };
+    case "ZodOptional":
+    case "ZodNullable":
+      return zodFieldToJsonSchema(schema._def.innerType);
+    case "ZodDefault":
+      return zodFieldToJsonSchema(schema._def.innerType);
+    case "ZodObject": {
+      const shape = schema._def.shape?.() || {};
+      const props: Record<string, any> = {};
+      const req: string[] = [];
+      for (const [k, v] of Object.entries(shape)) {
+        props[k] = zodFieldToJsonSchema(v);
+        if (!isZodOptional(v)) req.push(k);
+      }
+      const obj: any = { type: "object", properties: props };
+      if (req.length > 0) obj.required = req;
+      return obj;
+    }
+    case "ZodUnion":
+    case "ZodDiscriminatedUnion":
+      return { anyOf: (schema._def.options || []).map((o: any) => zodFieldToJsonSchema(o)) };
+    case "ZodAny":
+      return {};
+    default:
+      return {};
+  }
+}
+
 /**
  * Registry of all QuickBooks tools
  * Converts tool definitions to MCP-compatible format
@@ -194,20 +239,31 @@ export class QuickBooksToolRegistry {
   private static tools: Map<string, MCPTool> | null = null;
 
   private static convertToolToMCP(tool: any): MCPTool {
-    // Convert Zod schema to JSON Schema for inputSchema
-    const inputSchema = {
-      type: "object" as const,
-      properties: {} as Record<string, any>,
-      required: [] as string[],
-    };
+    // Convert Zod schema to JSON Schema using zod-to-json-schema
+    let inputSchema: any = { type: "object", properties: {} };
 
-    // Simple conversion - in production you'd want a proper Zod-to-JSON-Schema converter
-    if (tool.schema && tool.schema._def) {
-      const shape = tool.schema._def.shape?.() || {};
-      for (const [key, value] of Object.entries(shape)) {
-        inputSchema.properties[key] = { type: "string" }; // Simplified
-        if ((value as any)?.isOptional?.() === false) {
-          inputSchema.required.push(key);
+    if (tool.schema) {
+      try {
+        const converted = zodToJsonSchema(tool.schema, { target: "openApi3" });
+        // Remove $schema key if present (not needed for MCP)
+        const { $schema, ...rest } = converted as any;
+        inputSchema = rest;
+      } catch {
+        // Fallback: try manual extraction
+        if (tool.schema._def) {
+          const shape = tool.schema._def.shape?.() || {};
+          inputSchema = {
+            type: "object",
+            properties: {} as Record<string, any>,
+            required: [] as string[],
+          };
+          for (const [key, value] of Object.entries(shape)) {
+            inputSchema.properties[key] = zodFieldToJsonSchema(value);
+            if (!isZodOptional(value)) {
+              inputSchema.required.push(key);
+            }
+          }
+          if (inputSchema.required.length === 0) delete inputSchema.required;
         }
       }
     }
