@@ -8,7 +8,7 @@ WORKDIR /build
 
 # Copy parent package files
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --ignore-scripts && npm cache clean --force
 
 # Copy parent source
 COPY src ./src
@@ -29,6 +29,10 @@ RUN cd docker && npm ci && npm cache clean --force
 # Copy docker source
 COPY docker/src ./docker/src
 COPY docker/tsconfig.json ./docker/
+
+# Copy parent dependencies for cross-directory imports during TypeScript compilation
+COPY --from=parent-builder /build/node_modules ./node_modules
+COPY package.json ./
 
 # Copy parent source (needed for TypeScript to resolve cross-directory imports)
 COPY src ./src
