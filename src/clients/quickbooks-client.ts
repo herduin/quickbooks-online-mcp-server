@@ -337,6 +337,21 @@ class QuickbooksClient {
     }
     return this.quickbooksInstance;
   }
+
+  /**
+   * Inject tokens obtained externally (e.g. from the Docker HTTP OAuth flow).
+   * Updates both the in-memory state and process.env so subsequent
+   * authenticate() calls use the new values.
+   */
+  setTokens(refreshToken: string, realmId: string): void {
+    this.refreshToken = refreshToken;
+    this.realmId = realmId;
+    this.accessToken = undefined;
+    this.accessTokenExpiry = undefined;
+    this.quickbooksInstance = undefined;
+    process.env.QUICKBOOKS_REFRESH_TOKEN = refreshToken;
+    process.env.QUICKBOOKS_REALM_ID = realmId;
+  }
 }
 
 export const quickbooksClient = new QuickbooksClient({
