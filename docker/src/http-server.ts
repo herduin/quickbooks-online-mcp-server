@@ -28,7 +28,7 @@ function getOAuthClient(): OAuthClient {
     oauthClient = new OAuthClient({
       clientId,
       clientSecret,
-      environment,
+      environment: environment as "sandbox" | "production",
       redirectUri,
     });
   }
