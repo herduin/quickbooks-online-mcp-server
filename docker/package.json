@@ -1,0 +1,26 @@
+{
+  "name": "@qboapi/qbo-mcp-http-server",
+  "version": "0.0.1",
+  "description": "HTTP MCP server for QuickBooks Online integration (n8n compatible)",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "intuit-oauth": "^4.0.0",
+    "node-quickbooks": "^2.0.43",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build
+dist
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage
+.nyc_output
+*.log
+
+# Documentation (will be added separately)
+docs
+*.md
+!docker/README.md
+
+# CI/CD
+.github

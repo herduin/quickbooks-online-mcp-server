@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  qbo-mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: qbo-mcp-server
+    ports:
+      - "3230:3230"
+    environment:
+      # QuickBooks Configuration
+      QUICKBOOKS_CLIENT_ID: ${QUICKBOOKS_CLIENT_ID}
+      QUICKBOOKS_CLIENT_SECRET: ${QUICKBOOKS_CLIENT_SECRET}
+      QUICKBOOKS_REFRESH_TOKEN: ${QUICKBOOKS_REFRESH_TOKEN}
+      QUICKBOOKS_REALM_ID: ${QUICKBOOKS_REALM_ID}
+      QUICKBOOKS_ENVIRONMENT: ${QUICKBOOKS_ENVIRONMENT:-sandbox}
+      QUICKBOOKS_REDIRECT_URI: ${QUICKBOOKS_REDIRECT_URI:-http://localhost:8000/callback}
+
+      # MCP Server Configuration
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN}
+      PORT: 3230
+      NODE_ENV: production
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3230/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
