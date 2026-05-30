@@ -74,18 +74,37 @@ docker pull ghcr.io/herduin/quickbooks-online-mcp-server/mcp-http-server:latest
 |----------|----------|---------|-------------|
 | `QUICKBOOKS_CLIENT_ID` | Yes | - | QuickBooks OAuth client ID |
 | `QUICKBOOKS_CLIENT_SECRET` | Yes | - | QuickBooks OAuth client secret |
-| `QUICKBOOKS_REFRESH_TOKEN` | Yes | - | QuickBooks OAuth refresh token |
-| `QUICKBOOKS_REALM_ID` | Yes | - | QuickBooks company ID |
+| `QUICKBOOKS_REFRESH_TOKEN` | No* | - | QuickBooks OAuth refresh token (can be obtained via `/auth`) |
+| `QUICKBOOKS_REALM_ID` | No* | - | QuickBooks company ID (can be obtained via `/auth`) |
 | `QUICKBOOKS_ENVIRONMENT` | No | `sandbox` | `sandbox` or `production` |
-| `MCP_AUTH_TOKEN` | No | - | Bearer token for authentication (optional) |
+| `QUICKBOOKS_REDIRECT_URI` | No | `http://localhost:3230/auth/callback` | OAuth callback URL (set to your public URL) |
+| `MCP_AUTH_TOKEN` | No | - | Bearer token for MCP endpoint authentication (optional) |
 | `PORT` | No | `3230` | HTTP server port |
 
-### Getting QuickBooks Credentials
+\* Required for API calls. If not provided at startup, use the built-in OAuth flow (`/auth`) to obtain them.
 
-See the [Authentication Guide](../docs/authentication.md) in the main repository for detailed instructions on:
-- Creating a QuickBooks app
-- Obtaining OAuth credentials
-- Generating refresh tokens
+### Getting QuickBooks Credentials (Built-in OAuth Flow)
+
+The server includes a built-in OAuth flow — no separate auth server needed:
+
+1. **Set up your Intuit app:**
+   - Go to [Intuit Developer Portal](https://developer.intuit.com/)
+   - Create an app (or use existing)
+   - Add your callback URL as a Redirect URI: `https://your-domain.com/auth/callback`
+
+2. **Configure your stack with at minimum:**
+   ```env
+   QUICKBOOKS_CLIENT_ID=your_client_id
+   QUICKBOOKS_CLIENT_SECRET=your_client_secret
+   QUICKBOOKS_REDIRECT_URI=https://your-domain.com/auth/callback
+   QUICKBOOKS_ENVIRONMENT=sandbox  # or production
+   ```
+
+3. **Start the server and visit `/auth`** — you'll be redirected to Intuit to authorize.
+
+4. **After authorization**, the callback page displays your `QUICKBOOKS_REFRESH_TOKEN` and `QUICKBOOKS_REALM_ID`. Copy them into your stack environment for persistence across restarts.
+
+5. **Verify:** `GET /auth/status` shows current authentication state and token values.
 
 ## API Endpoints
 
@@ -94,6 +113,14 @@ See the [Authentication Guide](../docs/authentication.md) in the main repository
 - **`GET /health`** - Liveness check (always returns 200)
 - **`GET /ready`** - Readiness check (validates QuickBooks configuration)
 - **`GET /version`** - Server version and tool count
+
+### OAuth Authentication
+
+- **`GET /auth`** - Start OAuth flow (redirects to Intuit login)
+- **`GET /auth/callback`** - OAuth callback (receives tokens from Intuit)
+- **`GET /auth/status`** - Check authentication state and retrieve tokens
+
+> **Note:** `/auth` and `/auth/status` are protected by `MCP_AUTH_TOKEN` (if configured). The `/auth/callback` endpoint has no auth (Intuit redirects the browser there directly).
 
 ### MCP Protocol (Streamable HTTP)
 
@@ -132,6 +159,20 @@ All MCP requests require the `Mcp-Session-Id` header (except initial `initialize
 ```
 
 ## Testing with curl
+
+### OAuth Flow
+
+```bash
+# Check auth status
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:3230/auth/status
+
+# Start OAuth (open in browser - will redirect to Intuit)
+open "http://localhost:3230/auth"
+
+# After callback completes, verify:
+curl http://localhost:3230/ready
+# Should return: {"status":"ready"}
+```
 
 ### 1. Initialize Session
 
@@ -214,7 +255,7 @@ docker run -d \
 version: '3.8'
 services:
   qbo-mcp:
-    image: ghcr.io/herduin/quickbooks-online-mcp-server/mcp-http-server:latest
+    image: ghcr.io/herduin/quickbooks-online-mcp-server-http:latest
     container_name: qbo-mcp-server
     restart: unless-stopped
     ports:
@@ -358,7 +399,7 @@ docker stats qbo-mcp-server
 
 If using `:latest` tag and webhook doesn't pull new image:
 - Enable "Re-pull image" in Portainer stack settings
-- Or manually pull: `docker pull ghcr.io/herduin/quickbooks-online-mcp-server/mcp-http-server:latest && docker-compose up -d`
+- Or manually pull: `docker pull ghcr.io/herduin/quickbooks-online-mcp-server-http:latest && docker-compose up -d`
 
 ## Security
 
